@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ interface Promo {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedSalon, setSelectedSalon] = useState('');
   const [selectedMaster, setSelectedMaster] = useState('');
@@ -312,7 +314,7 @@ const Index = () => {
 
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border">
         <div className="flex items-center justify-around py-3 px-4">
-          <Button variant="ghost" size="sm" className="flex-col h-auto py-2">
+          <Button variant="default" size="sm" className="flex-col h-auto py-2">
             <Icon name="Home" size={20} />
             <span className="text-xs mt-1">Главная</span>
           </Button>
@@ -324,7 +326,7 @@ const Index = () => {
             <Icon name="Gift" size={20} />
             <span className="text-xs mt-1">Бонусы</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex-col h-auto py-2">
+          <Button variant="ghost" size="sm" className="flex-col h-auto py-2" onClick={() => navigate('/profile')}>
             <Icon name="User" size={20} />
             <span className="text-xs mt-1">Профиль</span>
           </Button>

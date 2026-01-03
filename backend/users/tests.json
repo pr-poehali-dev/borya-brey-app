@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "Create new user",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "phone": "+79991234567",
+        "name": "Тестовый Пользователь",
+        "email": "test@example.com"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "user": "object"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get user by phone",
+      "method": "GET",
+      "path": "/?phone=+79991234567",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "user": "object"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

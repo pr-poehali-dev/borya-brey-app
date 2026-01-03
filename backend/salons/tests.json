@@ -1,0 +1,34 @@
+{
+  "tests": [
+    {
+      "name": "Get all salons",
+      "method": "GET",
+      "path": "/?type=salons",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "salons": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get all services",
+      "method": "GET",
+      "path": "/?type=services",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "services": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get all masters",
+      "method": "GET",
+      "path": "/?type=masters",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "masters": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
