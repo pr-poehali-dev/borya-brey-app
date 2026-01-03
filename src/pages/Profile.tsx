@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,12 +7,13 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Icon from '@/components/ui/icon';
 import { useNavigate } from 'react-router-dom';
+import { api } from '@/lib/api';
 
 interface UserData {
   id: number;
   name: string;
   phone: string;
-  email: string;
+  email?: string;
   bonus_points: number;
   created_at: string;
 }
@@ -22,31 +23,59 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState<UserData>({
     id: 1,
-    name: 'Александр Петров',
-    phone: '+7 (917) 555-0123',
-    email: 'alex@example.com',
-    bonus_points: 1240,
-    created_at: '2025-06-15'
+    name: '',
+    phone: '',
+    email: '',
+    bonus_points: 0,
+    created_at: ''
   });
+  const [bonusHistory, setBonusHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [editData, setEditData] = useState(userData);
 
-  const handleSave = () => {
-    setUserData(editData);
-    setIsEditing(false);
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      setLoading(true);
+      const [user, history] = await Promise.all([
+        api.getUser(1),
+        api.getBonusHistory(1)
+      ]);
+      const fullUserData = { ...user, created_at: user.created_at || '2025-01-01' } as UserData;
+      setUserData(fullUserData);
+      setEditData(fullUserData);
+      setBonusHistory(history);
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await api.updateUser(userData.id, {
+        name: editData.name,
+        phone: editData.phone,
+        email: editData.email
+      });
+      setUserData(editData);
+      setIsEditing(false);
+      alert('Данные успешно обновлены!');
+    } catch (error) {
+      alert('Ошибка при сохранении данных');
+      console.error(error);
+    }
   };
 
   const handleCancel = () => {
     setEditData(userData);
     setIsEditing(false);
   };
-
-  const bonusHistory = [
-    { id: 1, points: 100, type: 'Начисление', description: 'За посещение', date: '2 января 2026' },
-    { id: 2, points: 50, type: 'Начисление', description: 'Бонус за отзыв', date: '28 декабря 2025' },
-    { id: 3, points: -200, type: 'Списание', description: 'Оплата услуги', date: '20 декабря 2025' },
-    { id: 4, points: 500, type: 'Начисление', description: 'Приведи друга', date: '15 декабря 2025' }
-  ];
 
   const stats = [
     { label: 'Визитов', value: '12', icon: 'Calendar' },
@@ -67,7 +96,7 @@ const Profile = () => {
         <div className="flex items-center gap-4 mb-6">
           <Avatar className="w-20 h-20 bg-primary/20">
             <AvatarFallback className="text-2xl font-bold text-primary">
-              {userData.name.split(' ').map(n => n[0]).join('')}
+              {userData.name ? userData.name.split(' ').map(n => n[0]).join('') : '?'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
@@ -158,24 +187,30 @@ const Profile = () => {
 
         <Card className="p-4">
           <h3 className="text-lg font-bold mb-4">ИСТОРИЯ БОНУСОВ</h3>
-          <div className="space-y-3">
-            {bonusHistory.map((item) => (
-              <div key={item.id}>
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="font-medium">{item.description}</p>
-                    <p className="text-xs text-muted-foreground">{item.date}</p>
+          {loading ? (
+            <p className="text-center text-muted-foreground py-4">Загрузка...</p>
+          ) : bonusHistory.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">Нет истории бонусов</p>
+          ) : (
+            <div className="space-y-3">
+              {bonusHistory.map((item) => (
+                <div key={item.id}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium">{item.description}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(item.created_at).toLocaleDateString('ru-RU')}</p>
+                    </div>
+                    <div className={`text-lg font-bold ${item.points_change > 0 ? 'text-primary' : 'text-destructive'}`}>
+                      {item.points_change > 0 ? '+' : ''}{item.points_change}
+                    </div>
                   </div>
-                  <div className={`text-lg font-bold ${item.points > 0 ? 'text-primary' : 'text-destructive'}`}>
-                    {item.points > 0 ? '+' : ''}{item.points}
-                  </div>
+                  {item.id !== bonusHistory[bonusHistory.length - 1].id && (
+                    <Separator className="mt-3" />
+                  )}
                 </div>
-                {item.id !== bonusHistory[bonusHistory.length - 1].id && (
-                  <Separator className="mt-3" />
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Card className="p-4">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
+import { api, type Salon, type Master, type Service } from '@/lib/api';
 
 interface Booking {
   id: number;
@@ -32,6 +33,33 @@ const Index = () => {
   const [selectedSalon, setSelectedSalon] = useState('');
   const [selectedMaster, setSelectedMaster] = useState('');
   const [selectedService, setSelectedService] = useState('');
+  
+  const [salons, setSalons] = useState<Salon[]>([]);
+  const [masters, setMasters] = useState<Master[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [salonsData, mastersData, servicesData] = await Promise.all([
+        api.getSalons(),
+        api.getMasters(),
+        api.getServices()
+      ]);
+      setSalons(salonsData);
+      setMasters(mastersData);
+      setServices(servicesData);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const bookings: Booking[] = [
     {
@@ -74,18 +102,35 @@ const Index = () => {
     { id: 2, name: 'Боря Брей - Автозаводский', address: 'ул. Южное шоссе, 12' }
   ];
 
-  const masters = [
-    { id: 1, name: 'Антон Борисов', rating: 4.9 },
-    { id: 2, name: 'Дмитрий Волков', rating: 4.8 },
-    { id: 3, name: 'Игорь Смирнов', rating: 5.0 }
-  ];
+  const handleBooking = async () => {
+    if (!selectedSalon || !selectedMaster || !selectedService || !date) {
+      alert('Пожалуйста, заполните все поля');
+      return;
+    }
 
-  const services = [
-    { id: 1, name: 'Стрижка', price: 1200, duration: '45 мин' },
-    { id: 2, name: 'Борода', price: 800, duration: '30 мин' },
-    { id: 3, name: 'Стрижка + Борода', price: 1800, duration: '60 мин' },
-    { id: 4, name: 'Королевское бритьё', price: 1500, duration: '50 мин' }
-  ];
+    const service = services.find(s => s.id.toString() === selectedService);
+    if (!service) return;
+
+    try {
+      await api.createBooking({
+        user_id: 1,
+        salon_id: parseInt(selectedSalon),
+        master_id: parseInt(selectedMaster),
+        service_id: parseInt(selectedService),
+        booking_date: date.toISOString().split('T')[0],
+        time_slot: '14:00',
+        status: 'confirmed',
+        total_price: service.price
+      });
+      alert('Запись успешно создана!');
+      setSelectedSalon('');
+      setSelectedMaster('');
+      setSelectedService('');
+    } catch (error) {
+      alert('Ошибка при создании записи');
+      console.error(error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -134,14 +179,20 @@ const Index = () => {
                     <SelectValue placeholder="Выберите салон" />
                   </SelectTrigger>
                   <SelectContent>
-                    {salons.map((salon) => (
-                      <SelectItem key={salon.id} value={salon.name}>
-                        <div className="flex flex-col items-start">
-                          <span className="font-medium">{salon.name}</span>
-                          <span className="text-xs text-muted-foreground">{salon.address}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {loading ? (
+                      <SelectItem value="loading" disabled>Загрузка...</SelectItem>
+                    ) : salons.length === 0 ? (
+                      <SelectItem value="empty" disabled>Нет доступных салонов</SelectItem>
+                    ) : (
+                      salons.map((salon) => (
+                        <SelectItem key={salon.id} value={salon.id.toString()}>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{salon.name}</span>
+                            <span className="text-xs text-muted-foreground">{salon.address}</span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -153,14 +204,20 @@ const Index = () => {
                     <SelectValue placeholder="Выберите услугу" />
                   </SelectTrigger>
                   <SelectContent>
-                    {services.map((service) => (
-                      <SelectItem key={service.id} value={service.name}>
-                        <div className="flex justify-between items-center w-full">
-                          <span>{service.name}</span>
-                          <span className="text-primary font-semibold ml-4">{service.price} ₽</span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {loading ? (
+                      <SelectItem value="loading" disabled>Загрузка...</SelectItem>
+                    ) : services.length === 0 ? (
+                      <SelectItem value="empty" disabled>Нет доступных услуг</SelectItem>
+                    ) : (
+                      services.map((service) => (
+                        <SelectItem key={service.id} value={service.id.toString()}>
+                          <div className="flex justify-between items-center w-full">
+                            <span>{service.name}</span>
+                            <span className="text-primary font-semibold ml-4">{service.price} ₽</span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -172,17 +229,23 @@ const Index = () => {
                     <SelectValue placeholder="Выберите мастера" />
                   </SelectTrigger>
                   <SelectContent>
-                    {masters.map((master) => (
-                      <SelectItem key={master.id} value={master.name}>
-                        <div className="flex items-center gap-2">
-                          <span>{master.name}</span>
-                          <span className="flex items-center text-xs text-primary">
-                            <Icon name="Star" size={12} className="mr-1 fill-current" />
-                            {master.rating}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {loading ? (
+                      <SelectItem value="loading" disabled>Загрузка...</SelectItem>
+                    ) : masters.length === 0 ? (
+                      <SelectItem value="empty" disabled>Нет доступных мастеров</SelectItem>
+                    ) : (
+                      masters.map((master) => (
+                        <SelectItem key={master.id} value={master.id.toString()}>
+                          <div className="flex items-center gap-2">
+                            <span>{master.name}</span>
+                            <span className="flex items-center text-xs text-primary">
+                              <Icon name="Star" size={12} className="mr-1 fill-current" />
+                              {master.rating}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -197,7 +260,7 @@ const Index = () => {
                 />
               </div>
 
-              <Button className="w-full" size="lg">
+              <Button className="w-full" size="lg" onClick={handleBooking}>
                 ПОДТВЕРДИТЬ ЗАПИСЬ
               </Button>
             </div>
