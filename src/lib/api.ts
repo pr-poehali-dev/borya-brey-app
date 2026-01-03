@@ -31,14 +31,17 @@ export interface Service {
 
 export interface Booking {
   id?: number;
-  user_id: number;
+  user_id?: number;
   salon_id: number;
   master_id: number;
   service_id: number;
   booking_date: string;
-  time_slot: string;
+  booking_time?: string;
+  time_slot?: string;
   status: string;
-  total_price: number;
+  total_price?: number;
+  client_name?: string;
+  client_phone?: string;
 }
 
 export interface User {
@@ -93,6 +96,10 @@ class ApiClient {
 
   async getUserBookings(userId: number): Promise<Booking[]> {
     return this.request(`${API_URLS.bookings}?user_id=${userId}`);
+  }
+
+  async getBookings(): Promise<Booking[]> {
+    return this.request(API_URLS.bookings);
   }
 
   async cancelBooking(bookingId: number): Promise<{ message: string }> {

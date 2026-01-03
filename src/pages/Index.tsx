@@ -135,9 +135,14 @@ const Index = () => {
             <h1 className="text-2xl font-bold text-foreground mb-1">БОРЯ БРЕЙ</h1>
             <p className="text-sm text-muted-foreground">Барбершоп в Тольятти</p>
           </div>
-          <Button variant="ghost" size="icon">
-            <Icon name="Bell" size={20} />
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
+              <Icon name="Settings" size={20} />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Icon name="Bell" size={20} />
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 bg-secondary/50 p-4 rounded-lg">

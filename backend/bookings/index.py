@@ -54,22 +54,17 @@ def handler(event: dict, context) -> dict:
             else:
                 cur.execute('''
                     SELECT 
-                        b.id, 
-                        u.name as user_name,
-                        u.phone as user_phone,
-                        s.name as service_name,
-                        m.name as master_name,
-                        sal.name as salon_name,
+                        b.id,
+                        b.salon_id,
+                        b.master_id,
+                        b.service_id,
                         b.booking_date,
                         b.booking_time,
-                        b.status
+                        b.status,
+                        b.client_name,
+                        b.client_phone
                     FROM bookings b
-                    JOIN users u ON b.user_id = u.id
-                    JOIN services s ON b.service_id = s.id
-                    JOIN masters m ON b.master_id = m.id
-                    JOIN salons sal ON b.salon_id = sal.id
                     ORDER BY b.booking_date DESC, b.booking_time DESC
-                    LIMIT 100
                 ''')
             
             bookings = cur.fetchall()
@@ -79,7 +74,7 @@ def handler(event: dict, context) -> dict:
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
-                'body': json.dumps({'bookings': bookings}, default=str),
+                'body': json.dumps(list(bookings), default=str),
                 'isBase64Encoded': False
             }
         
