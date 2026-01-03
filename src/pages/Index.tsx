@@ -97,11 +97,6 @@ const Index = () => {
     }
   ];
 
-  const salons = [
-    { id: 1, name: 'Боря Брей - Центр', address: 'ул. Ленина, 45' },
-    { id: 2, name: 'Боря Брей - Автозаводский', address: 'ул. Южное шоссе, 12' }
-  ];
-
   const handleBooking = async () => {
     if (!selectedSalon || !selectedMaster || !selectedService || !date) {
       alert('Пожалуйста, заполните все поля');
